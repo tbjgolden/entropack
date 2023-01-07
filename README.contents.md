@@ -1,7 +1,3 @@
-What should be included in this lib?
-
-===
-
 packyak (string manip) (types) (node+web)
 
 - EXCLUSIONS
@@ -9,22 +5,16 @@ packyak (string manip) (types) (node+web)
   - english-specific stuff
   - filesystem-specific stuff
   - features that have a low usage:bytes ratio
-  - stuff with a Stage 2+ equivalent
-- tdd development :O support generic iterables instead of array?
-- prioritise use-case oriented fns over sugar
-  - define this
-- sort from most simple to least
 
 ---
 
 needs more research:
 
-stdlibs in other langs
-
 Should add?
 
 - deep-extend / deepmerge
 - diff
+- textwrap
 - validate types
   - perhaps a slimmed down version of npm:runtypes
   - or just json focused - a slimmed down npm:ajv
