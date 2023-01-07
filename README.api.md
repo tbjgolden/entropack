@@ -1,0 +1,183 @@
+should it follow JS built-in conventions?
+
+- stripAnsiEscapes
+- ensureUnixLineEndings
+- ensureStartsWith
+- ensureEndsWith
+- String.toCodePoints (for of + codePointAt with string)
+- String.toChars (for of + codePointAt with string)
+- String.reverse (for of + codePointAt with string)
+- String.isCharEscaped
+- removeLineComments / /
+- removeBlockComments / \* \* /
+- removeJsonComments (like the above but skip over strings)
+- encodeCssEscapes decodeCssEscapes
+- encodeHtmlEntities decodeHtmlEntities (adapt npm:he)
+- getStringBytes (JS (i.e. utf16) string => UTF-8 byte counter (equiv to buffer.byteLength))
+- encodeBase64 decodeBase64
+- encodeBase64Url decodeBase64Url
+- encodeHex decodeHex
+- getType // with null fix
+- getTypeBuiltIns // with detection for built-in instances
+  (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects)
+- isStringSafeJsonChild
+  - checks for circular deps
+  - checks for unserialisable types
+- isStringSafeJson
+  - isStringSafeJsonChild && checks root type is obj or arr
+- [utility types]
+  - see README.types.md
+  - utility types (entries, other tuple methods?)
+- delay
+- waitUntil
+- debounce
+- throttle
+- escapeRegExp
+- toMs(2, 'days') fromMs(64000, 'format')
+- toUnprefixedUnit('2kW') => [2000, 'W'] toPrefixedUnit(2000, 'W')
+- stripIndent`...`
+- stripIndents`...`
+- oneLine`...`
+- oneLineTrim`...`
+- random ??= random(crypto) ?? random(Math.random)
+- equal (optional depth param, default Infinity)
+- equiv (optional depth param, default Infinity)
+- Dates
+  - IsoDate
+    - constructor (IsoDate or ISO string)
+    - get {millis,seconds,minutes,hours,days,weeks,months,years,offsetMinutes}
+    - set {millis,seconds,minutes,hours,days,weeks,months,years,offsetMinutes}
+    - add and sub done via setters += -=
+  - startOf{Second,Minute,Hour,Day,Week,Month,Year}
+  - endOf{Second,Minute,Hour,Day,Week,Month,Year}
+  - each{Second,Minute,Hour,Day,Week,Month,Year}InInterval
+  - Date.toTzString(tz)
+  - parseDateTimeTz
+  - isDateTimeTz
+  - parseDateTime
+  - isDateTime (str, exact = false) exact=true -> fails w/ extra tz
+  - parseDateTz
+  - isDateTz (str, exact = false) exact=true -> fails w/ extra time
+  - parseTimeTz
+  - isTimeTz (str, exact = false) exact=true -> fails w/ extra date
+  - parseDate
+  - isDate (str, exact = false) exact=true -> fails w/ extra time or tz
+  - parseTime
+  - isTime (str, exact = false) exact=true -> fails w/ extra date or tz
+  - parseTz
+  - isTz (str, exact = false) exact=true -> fails w/ extra date or time
+- parseRegExp ("/sios/g" => ["sios", "g"])
+- changeTz
+- isHttpsUrl
+- isIp
+- isIpV4
+- isIpV6
+- dfsNode
+- bfsNode
+- dfsEdge
+- bfsEdge
+- unixGlob (python stdlib? minimatch etc)
+- Object.hasKey
+- Object.clone
+  (https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm,
+  https://github.com/ungap/structured-clone)
+- Object.stringify (compatible with Structured clone algorithm, check for standards)
+- Object.parse (compatible with Structured clone algorithm)
+- unique
+- uniqueEqual
+- uniqueEquiv
+- ellipsis
+- camelCase
+- pascalCase
+- kebabLowerCase
+- kebabUpperCase
+- snakeLowerCase
+- snakeUpperCase
+- Array.fromAsync
+- Array.prototype.toReversed
+- Array.prototype.toSorted
+- Array.prototype.toSpliced
+- Array.prototype.with
+- Array.find(arr, selector).min | getters | max,maxValue,min,minValue,sum,product,mean
+- Array.groupBy(selector) => Array.prototype.group // groupToMap
+- Array.order() // sort but no mutation, multiple sort functions
+- Array.without()
+- transpose()
+- cellsToEntries()
+- compose()
+- invert() (special case compose with boolean)
+- isNullish() (is null or undefined)
+- default() (is null or undefined)
+- Array.chunk()
+- Map.getSet()
+- ensureArray
+- Object.entries()
+- Object.fromEntries()
+- range()
+- shuffle()
+- String.pad()
+- reversed()
+- String.repeat()
+- Array.repeat()
+- partApply()
+- Object.size()
+- Math.sum()
+- Math.product()
+- Math.mean()
+- Math.clamp()
+- sortAsc()
+- sortDesc()
+- memoAll()
+- memoLast(n = 1)
+- arg1()
+- arg2()
+- arg3()
+- arg4()
+- arg(n: number)
+- String.trimStart
+- String.trimEnd
+- String.trim
+- Array.trimStart
+- Array.trimEnd
+- Array.trim
+- i(x) => x
+- JSON.stringify() - check invalid json types (but allows undefined)
+- JSON.parse() - strips js comments, then parses, swaps nulls for undefined
+- isNull()
+- NULL
+- NOOP
+- HTTP_STATUS (https://github.com/YoussefZidan/constants-js/blob/master/src/status.js or
+  https://github.com/Offirmo/network-constants.js/blob/master/http.js)
+- String.isUpperCase()
+- String.isLowerCase()
+- isLowerAZ()
+- isUpperAZ()
+- isAZ()
+- isLowerAZ09()
+- isUpperAZ09()
+- isAZ09()
+- isAscii()
+- isDataURI()
+- readDataURI()
+- isEmail()
+- readEmail()
+- isHex()
+- isOctal()
+- isSemVer()
+- readSemVer()
+- isSlug()
+- isValidPassword()
+- readValidPassword()
+- isURL()
+- readURL()
+- isUUID()
+- ensureNoControlChars()
+- isFloat()
+- readFloat()
+- isInt()
+- readInt()
+
+===
+
+- array/obj helpers should be added here
+  - ... search Array.prototype packages and Object.prototype packages
