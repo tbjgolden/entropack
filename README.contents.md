@@ -2,7 +2,7 @@ What should be included in this lib?
 
 ===
 
-entropack (string manip) (types) (node+web)
+packyak (string manip) (types) (node+web)
 
 - EXCLUSIONS
   - cli-oriented stuff

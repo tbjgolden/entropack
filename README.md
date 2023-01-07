@@ -1,22 +1,11 @@
-```sh
-git clone https://github.com/tbjgolden/entropack.git cool-package-name
-cd cool-package-name
-npx find-repl entropack cool-package-name
-rm -rf .git
-git init
-npm install
-```
+# packyak
 
----
+![packyak](packyak.png)
 
-# entropack
-
-![banner](banner.svg)
-
-![npm](https://img.shields.io/npm/v/entropack)
-![npm type definitions](https://img.shields.io/npm/types/entropack)
-![license](https://img.shields.io/npm/l/entropack)
-[![install size](https://packagephobia.com/badge?p=entropack)](https://packagephobia.com/result?p=entropack)
+![npm](https://img.shields.io/npm/v/packyak)
+![npm type definitions](https://img.shields.io/npm/types/packyak)
+![license](https://img.shields.io/npm/l/packyak)
+[![install size](https://packagephobia.com/badge?p=packyak)](https://packagephobia.com/result?p=packyak)
 
 A npm library that does exactly what it says on the tin.
 
@@ -34,24 +23,24 @@ A npm library that does exactly what it says on the tin.
 This package is available from the `npm` registry.
 
 ```sh
-npm install entropack
+npm install packyak
 ```
 
 ## Usage
 
 ```sh
-npx entropack ...
+npx packyak ...
 ```
 
 Supports JavaScript + TypeScript:
 
 ```ts
-import { foo } from "entropack";
+import { foo } from "packyak";
 
 foo();
 ```
 
-Can also be imported via `require("entropack")`.
+Can also be imported via `require("packyak")`.
 
 ## API
 

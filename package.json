@@ -1,5 +1,5 @@
 {
-  "name": "entropack",
+  "name": "packyak",
   "version": "0.0.0",
   "license": "Apache-2.0",
   "type": "module",
@@ -7,9 +7,9 @@
   "exports": "./dist/lib/index.js",
   "types": "./dist/lib/index.d.ts",
   "bin": {
-    "entropack": "./dist/cli/index.js"
+    "packyak": "./dist/cli/index.js"
   },
-  "homepage": "https://github.com/tbjgolden/entropack",
+  "homepage": "https://github.com/tbjgolden/packyak",
   "author": {
     "name": "Tom Golden",
     "email": "oss@tom.bio",
