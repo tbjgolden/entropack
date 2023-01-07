@@ -83,6 +83,9 @@
     ],
     "transform": {
       "\\.ts$": "<rootDir>/node_modules/xnr/jest.js"
+    },
+    "moduleNameMapper": {
+      "(.+)\\.(m|c)?js": "$1"
     }
   }
 }
