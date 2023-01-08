@@ -64,3 +64,12 @@ test("List offset overflow", () => {
   for (let i = 0; i <= 15; i++) list.shift();
   expect([...list.values()]).toMatchObject([16, 17, 18, 19]);
 });
+
+test("List much faster than Array as a long queue", () => {
+  const listStart = performance.now();
+  const list = new List<number>();
+  for (let j = 0; j < 1_000_000; j++) list.push(j);
+  for (let j = 0; j < 1_000_000; j++) list.shift();
+  expect(performance.now() - listStart).toBeLessThanOrEqual(5000);
+  // array equivalent takes about a minute
+});

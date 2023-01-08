@@ -53,7 +53,7 @@ export class List<T> {
       this.#array[this.#offset++] = undefined;
 
       // remove leading undefineds when offset crosses a threshold
-      if (this.#offset + this.#offset > 10 + this.#array.length) {
+      if (this.#offset > 10 + this.length) {
         this.#array.splice(0, this.#offset);
         this.#offset = 0;
       }
