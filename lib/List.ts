@@ -65,13 +65,32 @@ export class List<T> {
     return this.#array[index + this.#offset]?.value;
   }
 
-  set(index: number, value: T): void {
-    if (index < 0 || index > this.length) {
-      throw new Error(`Cannot set (index=${index}) on List (length=${this.length})`);
-    } else if (this.length === 0 || index === this.length) {
-      this.#push(value);
+  change(index: number, value: T): void {
+    if (index < 0 || index >= this.length) {
+      throw new Error(`Cannot change (index=${index}) on List (length=${this.length})`);
     } else {
       const node = this.#array[index + this.#offset] as ListNode<T>;
+      node.value = value;
+    }
+  }
+
+  insert(index: number, value: T): void {
+    if (index < 0 || index > this.length) {
+      throw new Error(`Cannot insert at (index=${index}) on List (length=${this.length})`);
+    } else {
+      const nextNode = this.#array[index + this.#offset];
+      const node = { value, prev: nextNode?.prev, next: nextNode };
+      this.#array.splice(index + this.#offset, 0, node);
+      if (nextNode) {
+        if (nextNode.prev) {
+          nextNode.prev.next = node;
+        } else {
+          this.#head = node;
+        }
+        nextNode.prev = node;
+      } else {
+        this.#tail = node;
+      }
       node.value = value;
     }
   }

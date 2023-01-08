@@ -26,7 +26,7 @@ test("List", () => {
   expect([...list.values()]).toMatchObject([]);
   list.push(5, 10, 1);
   expect([...list.values()]).toMatchObject([5, 10, 1]);
-  list.set(2, 2);
+  list.change(2, 2);
   expect(list.get(2)).toBe(2);
   expect([...list.values()]).toMatchObject([5, 10, 2]);
   expect(list.length).toBe(3);
@@ -35,14 +35,26 @@ test("List", () => {
   expect(list.shift()).toBe(5);
   expect(list.length).toBe(1);
   expect(list.shift()).toBe(10);
-  expect(list.set(0, 10)).toBe(undefined);
-  expect(() => list.set(-1, 1)).toThrowError(/^Cannot set \(index=-1\) on List \(length=1\)$/);
+  list.push(10);
+  expect(() => list.change(-1, 1)).toThrowError(
+    /^Cannot change \(index=-1\) on List \(length=1\)$/
+  );
   expect(list.pop()).toBe(10);
   expect(list.length).toBe(0);
   expect(list.pop()).toBe(undefined);
   expect(list.shift()).toBe(undefined);
   expect(list.length).toBe(0);
   expect([...list.values()]).toMatchObject([]);
+});
+
+test("List insert", () => {
+  const list = new List<string>();
+  expect(list.length).toBe(0);
+  list.insert(0, "foo");
+  list.insert(0, "bar");
+  list.insert(1, "baz");
+  expect(() => list.insert(4, "boo")).toThrow();
+  expect([...list.values()]).toMatchObject(["bar", "baz", "foo"]);
 });
 
 test("List offset overflow", () => {
