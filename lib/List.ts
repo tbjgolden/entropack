@@ -17,8 +17,30 @@ export class List<T = never> {
   #head?: ListNode<T> = undefined;
   #tail?: ListNode<T> = undefined;
   #subLists: SubList<T>[] = [];
+  length: number;
 
-  length = 0;
+  constructor(iterable = [] as Iterable<T>) {
+    let prev: ListNode<T> | undefined;
+    let subList: SubList<T> = undefined as unknown as SubList<T>;
+    let length = 0;
+    for (const value of iterable) {
+      const node: ListNode<T> = { value, prev };
+      if (prev) {
+        prev.next = node;
+      } else {
+        this.#head = node;
+      }
+      prev = node;
+      if (length % SUB_HALF_SIZE === 0) {
+        subList = { offset: SUB_BUFFER, items: new Array(SUB_BUFFER).fill(void 0) };
+        this.#subLists.push(subList);
+      }
+      subList.items.push(node);
+      length += 1;
+    }
+    this.#tail = prev;
+    this.length = length;
+  }
 
   #ensureSubListExists() {
     if (this.#subLists.length === 0) {

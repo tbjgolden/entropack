@@ -1,7 +1,7 @@
 import { List } from "./List.js";
 
 test("List", () => {
-  const list = new List();
+  const list = new List<number>();
   for (let j = 0; j < 1000; j++) list.push(j);
   expect(list.at(30)).toBe(30);
   expect(list.at(0)).toBe(0);
@@ -13,7 +13,7 @@ test("List", () => {
 // as queue 3:2
 test("List as queue", () => {
   const start = performance.now();
-  const list = new List();
+  const list = new List<number>();
   for (let j = 0; j < 6e4; j++) list.push(j);
   for (let j = 0; j < 4e4; j++) list.shift();
   expect(performance.now() - start).toBeLessThan(100);
@@ -28,7 +28,7 @@ test("List as queue", () => {
 // as stack 3:2
 test("List as stack", () => {
   const start = performance.now();
-  const list = new List();
+  const list = new List<number>();
   for (let j = 0; j < 6e4; j++) list.push(j);
   for (let j = 0; j < 4e4; j++) list.pop();
   expect(performance.now() - start).toBeLessThan(100);
@@ -43,7 +43,7 @@ test("List as stack", () => {
 // as reverse stack 3:2
 test("List as reverse stack", () => {
   const start = performance.now();
-  const list = new List();
+  const list = new List<number>();
   for (let j = 0; j < 6e4; j++) list.unshift(j);
   for (let j = 0; j < 4e4; j++) list.shift();
   expect(performance.now() - start).toBeLessThan(100);
@@ -176,12 +176,10 @@ test("List remove will autoremove sublist", () => {
 });
 
 test("List remove at sublist start will use buffer", () => {
-  const list = new List<number>();
-  expect(list.length).toBe(0);
-  for (let i = 0; i < 102; i++) {
-    list.push(i);
-  }
-  expect([...list]).toEqual(new Array(102).fill(0).map((_, i) => i));
+  const arr = new Array(102).fill(0).map((_, i) => i);
+  const list = new List(arr);
+  expect(list.length).toBe(102);
+  expect([...list]).toEqual(arr);
   expect(list.splice(100, 1)).toEqual([100]);
 });
 
