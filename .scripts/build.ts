@@ -1,6 +1,7 @@
 import { readFile, writeFile, rm, mkdir } from "node:fs/promises";
 import { spawn } from "node:child_process";
-import { readJSON } from "easier-node";
+import { readJSON, perFileMatch } from "easier-node";
+import { minify } from "terser";
 import { checkDirectory } from "./lib/utils";
 
 checkDirectory();
@@ -28,3 +29,8 @@ await new Promise<void>((resolve, reject) => {
   });
 });
 await rm("tsconfig.tmp.json");
+
+await perFileMatch("dist/**/*.{js,mjs}", async (filePath) => {
+  const prevFile = await readFile(filePath, "utf8");
+  await writeFile(filePath, (await minify(prevFile, { sourceMap: false })).code ?? prevFile);
+});
