@@ -13,7 +13,7 @@ const SUB_SIZE = 200;
 const SUB_HALF_SIZE = 100;
 const SUB_BUFFER = 50;
 
-export class List<T> {
+export class List<T = never> {
   #head?: ListNode<T> = undefined;
   #tail?: ListNode<T> = undefined;
   #subLists: SubList<T>[] = [];
@@ -121,6 +121,81 @@ export class List<T> {
     return this.#subLists[location[0]].items[location[1]] as ListNode<T>;
   }
 
+  #insert(index: number, value: T) {
+    if (index === this.length) {
+      this.#push(value);
+    } else if (index === 0) {
+      this.#unshift(value);
+    } else {
+      const location = this.#indexToLocation(index);
+      const nextItem = this.#getByLocation(location);
+      const item = { value, prev: nextItem.prev, next: nextItem };
+      {
+        const prevItem = item.prev as ListNode<T>;
+        prevItem.next = item;
+        nextItem.prev = item;
+      }
+      const subList = this.#subLists[location[0]];
+      {
+        subList.items.splice(location[1], 0, item);
+      }
+      if (subList.offset + subList.items.length > SUB_SIZE) {
+        if (subList.offset > 0) {
+          // sublist too big, shift left using offset
+          subList.items.shift();
+          subList.offset -= 1;
+        } else {
+          // sublist too big, split in two
+          this.#subLists.splice(
+            location[0],
+            1,
+            {
+              offset: SUB_BUFFER,
+              items: [
+                ...new Array(SUB_BUFFER).fill(void 0),
+                ...subList.items.slice(0, SUB_HALF_SIZE),
+              ],
+            },
+            {
+              offset: SUB_BUFFER,
+              items: [...new Array(SUB_BUFFER).fill(void 0), ...subList.items.slice(SUB_HALF_SIZE)],
+            }
+          );
+        }
+      }
+      this.length += 1;
+    }
+  }
+
+  #remove(index: number): T {
+    const location = this.#indexToLocation(index);
+    const item = this.#getByLocation(location);
+    {
+      if (item.prev) {
+        item.prev.next = item.next;
+      } else {
+        this.#head = item.next;
+      }
+      if (item.next) {
+        item.next.prev = item.prev;
+      } else {
+        this.#tail = item.prev;
+      }
+    }
+    {
+      const subList = this.#subLists[location[0]];
+      if (subList.items.length === subList.offset + 1) {
+        this.#subLists.splice(location[0], 1);
+      } else if (location[1] === subList.offset) {
+        subList.items[subList.offset++] = undefined;
+      } else {
+        subList.items.splice(location[1], 1);
+      }
+    }
+    this.length -= 1;
+    return item.value;
+  }
+
   push(...values: T[]) {
     for (const value of values) {
       this.#push(value);
@@ -188,82 +263,20 @@ export class List<T> {
     this.#getByLocation(this.#indexToLocation(index)).value = value;
   }
 
-  insert(index: number, value: T) {
-    if (index === this.length) {
-      this.#push(value);
-    } else if (index === 0) {
-      this.#unshift(value);
-    } else {
-      const location = this.#indexToLocation(index);
-      const nextItem = this.#getByLocation(location);
-      const item = { value, prev: nextItem.prev, next: nextItem };
-      {
-        const prevItem = item.prev as ListNode<T>;
-        prevItem.next = item;
-        nextItem.prev = item;
-      }
-      const subList = this.#subLists[location[0]];
-      {
-        subList.items.splice(location[1], 0, item);
-      }
-      if (subList.offset + subList.items.length > SUB_SIZE) {
-        if (subList.offset > 0) {
-          // sublist too big, shift left using offset
-          subList.items.shift();
-          subList.offset -= 1;
-        } else {
-          // sublist too big, split in two
-          this.#subLists.splice(
-            location[0],
-            1,
-            {
-              offset: SUB_BUFFER,
-              items: [
-                ...new Array(SUB_BUFFER).fill(void 0),
-                ...subList.items.slice(0, SUB_HALF_SIZE),
-              ],
-            },
-            {
-              offset: SUB_BUFFER,
-              items: [...new Array(SUB_BUFFER).fill(void 0), ...subList.items.slice(SUB_HALF_SIZE)],
-            }
-          );
-        }
-      }
-      this.length += 1;
+  splice(index: number, deleteCount = 0, ...items: T[]): T[] {
+    const removed: T[] = new Array(deleteCount);
+    for (let i = 0; i < deleteCount; i++) {
+      // eslint-disable-next-line security/detect-object-injection
+      removed[i] = this.#remove(index);
     }
+    for (let i = items.length - 1; i >= 0; i--) {
+      // eslint-disable-next-line security/detect-object-injection
+      this.#insert(index, items[i]);
+    }
+    return removed;
   }
 
-  remove(index: number): T {
-    const location = this.#indexToLocation(index);
-    const item = this.#getByLocation(location);
-    {
-      if (item.prev) {
-        item.prev.next = item.next;
-      } else {
-        this.#head = item.next;
-      }
-      if (item.next) {
-        item.next.prev = item.prev;
-      } else {
-        this.#tail = item.prev;
-      }
-    }
-    {
-      const subList = this.#subLists[location[0]];
-      if (subList.items.length === subList.offset + 1) {
-        this.#subLists.splice(location[0], 1);
-      } else if (location[1] === subList.offset) {
-        subList.items[subList.offset++] = undefined;
-      } else {
-        subList.items.splice(location[1], 1);
-      }
-    }
-    this.length -= 1;
-    return item.value;
-  }
-
-  *values() {
+  *[Symbol.iterator]() {
     let current = this.#head;
     while (current) {
       yield current.value;
