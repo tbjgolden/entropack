@@ -12,5 +12,10 @@ test("Dict", () => {
       hello: "banana",
     },
   });
-  expect(dict.toString()).toBe("");
+  expect(dict.toString()).toBe(`  a: true
+  aa: who,3,,false,-1
+  b:   hello: banana
+  he: he
+  hi: world
+  x: 4`);
 });
