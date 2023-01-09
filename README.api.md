@@ -194,7 +194,7 @@ data structures first
 - [ ] isNullish() (is null or undefined)
 - [ ] default() (is null or undefined)
 - [ ] Array.chunk()
-- [ ] Map.setIfNotExists()
+- [ ] Map.setIfNotExists() Array.setIfNotExists() // <- Array.p.at()
 - [ ] ensureArray
 - [ ] Object.entries()
 - [ ] Object.fromEntries()

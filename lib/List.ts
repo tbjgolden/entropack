@@ -4,39 +4,123 @@ export type ListNode<T> = {
   prev?: ListNode<T>;
 };
 
+export type SubList<T> = {
+  offset: number;
+  items: Array<ListNode<T> | undefined>;
+};
+
+const SUB_SIZE = 200;
+const SUB_HALF_SIZE = 100;
+const SUB_BUFFER = 50;
+
 export class List<T> {
   #head?: ListNode<T> = undefined;
   #tail?: ListNode<T> = undefined;
-  #array: Array<ListNode<T> | undefined> = [];
-  #offset = 0;
+  #subLists: SubList<T>[] = [];
+
+  length = 0;
+
+  #ensureSubListExists() {
+    if (this.#subLists.length === 0) {
+      this.#subLists.push({
+        offset: SUB_BUFFER,
+        items: new Array(SUB_BUFFER).fill(void 0),
+      });
+    }
+  }
+
+  #getLastSubListForPush() {
+    this.#ensureSubListExists();
+    let lastSubList = this.#subLists[this.#subLists.length - 1];
+    if (lastSubList.items.length + lastSubList.offset >= SUB_SIZE) {
+      lastSubList = {
+        offset: SUB_BUFFER,
+        items: new Array(SUB_BUFFER).fill(void 0),
+      };
+      this.#subLists.push(lastSubList);
+    }
+    return lastSubList;
+  }
 
   #push(value: T) {
     const node: ListNode<T> = { value };
-    if (this.#head === undefined) {
-      this.#head = node;
+    {
+      if (this.#head === undefined) {
+        this.#head = node;
+      }
+      if (this.#tail) {
+        this.#tail.next = node;
+        node.prev = this.#tail;
+      }
+      this.length += 1;
+      this.#tail = node;
     }
-    if (this.#tail) {
-      this.#tail.next = node;
-      node.prev = this.#tail;
+    {
+      this.#getLastSubListForPush().items.push(node);
     }
-    this.#tail = node;
-    this.#array.push(node);
   }
 
   push(...values: T[]) {
-    for (const value of values) this.#push(value);
+    for (const value of values) {
+      this.#push(value);
+    }
+  }
+
+  #getFirstSubListForUnshift() {
+    this.#ensureSubListExists();
+    let firstSubList = this.#subLists[0];
+    if (firstSubList.offset === 0) {
+      firstSubList = {
+        offset: SUB_BUFFER,
+        items: new Array(SUB_BUFFER).fill(void 0),
+      };
+      this.#subLists.unshift(firstSubList);
+    }
+    return firstSubList;
+  }
+
+  #unshift(value: T) {
+    const node: ListNode<T> = { value };
+    {
+      if (this.#tail === undefined) {
+        this.#tail = node;
+      }
+      if (this.#head) {
+        this.#head.prev = node;
+        node.next = this.#head;
+      }
+      this.length += 1;
+      this.#head = node;
+    }
+    {
+      const lastSubList = this.#getFirstSubListForUnshift();
+      lastSubList.items[--lastSubList.offset] = node;
+    }
+  }
+
+  unshift(...values: T[]) {
+    for (const value of values) {
+      this.#unshift(value);
+    }
   }
 
   pop(): T | undefined {
     if (this.#tail) {
       const value = this.#tail.value;
-      this.#tail = this.#tail.prev;
-      if (this.#tail === undefined) {
-        this.#head = undefined;
-      } else {
-        this.#tail.next = undefined;
+      {
+        this.#tail = this.#tail.prev;
+        if (this.#tail === undefined) {
+          this.#head = undefined;
+        } else {
+          this.#tail.next = undefined;
+        }
       }
-      this.#array.pop();
+      {
+        this.#ensureSubListExists();
+        const lastSubList = this.#subLists[this.#subLists.length - 1];
+        lastSubList.items.pop();
+      }
+      this.length -= 1;
       return value;
     }
   }
@@ -44,76 +128,141 @@ export class List<T> {
   shift(): T | undefined {
     if (this.#head) {
       const value = this.#head.value;
-      this.#head = this.#head.next;
-      if (this.#head === undefined) {
-        this.#tail = undefined;
-      } else {
-        this.#head.prev = undefined;
+      {
+        this.#head = this.#head.next;
+        if (this.#head === undefined) {
+          this.#tail = undefined;
+        } else {
+          this.#head.prev = undefined;
+        }
       }
-      this.#array[this.#offset++] = undefined;
-
-      // remove leading undefineds when offset crosses a threshold
-      if (this.#offset > 10 + this.length) {
-        this.#array.splice(0, this.#offset);
-        this.#offset = 0;
+      {
+        this.#ensureSubListExists();
+        if (this.#subLists[0].offset >= SUB_SIZE) {
+          this.#subLists[0] = {
+            offset: SUB_BUFFER,
+            items: new Array(SUB_BUFFER).fill(void 0),
+          };
+        }
+        if (this.#subLists[0].items.length > 0) {
+          this.#subLists[0].items[this.#subLists[0].offset++] = undefined;
+        }
       }
+      this.length -= 1;
       return value;
     }
   }
 
-  get(index: number): T | undefined {
-    return this.#array[index + this.#offset]?.value;
-  }
-
-  change(index: number, value: T): void {
-    if (index < 0 || index >= this.length) {
-      throw new Error(`Cannot change (index=${index}) on List (length=${this.length})`);
-    } else {
-      const node = this.#array[index + this.#offset] as ListNode<T>;
-      node.value = value;
-    }
-  }
-
-  insert(index: number, value: T): void {
-    if (index < 0 || index > this.length) {
-      throw new Error(`Cannot insert at (index=${index}) on List (length=${this.length})`);
-    } else {
-      const nextNode = this.#array[index + this.#offset];
-      const node = { value, prev: nextNode?.prev, next: nextNode };
-      this.#array.splice(index + this.#offset, 0, node);
-      if (nextNode) {
-        if (nextNode.prev) {
-          nextNode.prev.next = node;
-        } else {
-          this.#head = node;
+  #indexToLocation(index: number): [number, number] {
+    if (index < 0) index = this.length + index;
+    if (Number.isInteger(index)) {
+      if (index >= this.length) {
+        throw new Error("out of bounds error");
+      } else {
+        let len = 0;
+        let i = 0;
+        for (const subList of this.#subLists) {
+          len += subList.items.length - subList.offset;
+          if (index < len) {
+            return [i, subList.items.length - (len - index)];
+          }
+          i += 1;
         }
-        nextNode.prev = node;
-      } else {
-        this.#tail = node;
+        throw new Error("error finding index in List");
       }
-      node.value = value;
+    } else {
+      throw new TypeError("index must be an integer");
     }
   }
 
-  remove(index: number): T | undefined {
-    const removedValue = this.#array.splice(index + this.#offset, 1)[0];
-    if (removedValue) {
-      if (removedValue.prev) {
-        removedValue.prev.next = removedValue.next;
-      } else {
-        this.#head = removedValue.next;
+  #getByLocation(location: [number, number]): ListNode<T> {
+    return this.#subLists[location[0]].items[location[1]] as ListNode<T>;
+  }
+
+  get(index: number): T {
+    return this.#getByLocation(this.#indexToLocation(index)).value;
+  }
+
+  set(index: number, value: T) {
+    this.#getByLocation(this.#indexToLocation(index)).value = value;
+  }
+
+  insert(index: number, value: T) {
+    if (index === this.length) {
+      this.#push(value);
+    } else if (index === 0) {
+      this.#unshift(value);
+    } else {
+      const location = this.#indexToLocation(index);
+      {
+        const nextItem = this.#getByLocation(location);
+        const item = { value, prev: nextItem.prev, next: nextItem };
+        const prevItem = item.prev as ListNode<T>;
+        prevItem.next = item;
+        nextItem.prev = item;
       }
-      if (removedValue.next) {
-        removedValue.next.prev = removedValue.prev;
-      } else {
-        this.#tail = removedValue.prev;
+      const subList = this.#subLists[location[0]];
+      {
+        subList.items.splice(location[1], 0, {
+          value,
+          prev: subList.items[location[1]]?.prev,
+          next: subList.items[location[1]],
+        });
       }
-      return removedValue.value;
+      // if the sublist is too big, split in two
+      if (subList.offset + subList.items.length > SUB_SIZE) {
+        if (subList.offset > 0) {
+          subList.items.shift();
+          subList.offset -= 1;
+        } else {
+          this.#subLists.splice(
+            location[0],
+            1,
+            {
+              offset: SUB_BUFFER,
+              items: [
+                ...new Array(SUB_BUFFER).fill(void 0),
+                ...subList.items.slice(0, SUB_HALF_SIZE),
+              ],
+            },
+            {
+              offset: SUB_BUFFER,
+              items: [...new Array(SUB_BUFFER).fill(void 0), ...subList.items.slice(SUB_HALF_SIZE)],
+            }
+          );
+        }
+      }
+      this.length += 1;
     }
   }
 
-  get length(): number {
-    return this.#array.length - this.#offset;
+  remove(index: number): T {
+    const location = this.#indexToLocation(index);
+    const item = this.#getByLocation(location);
+    {
+      if (item.prev) {
+        item.prev.next = item.next;
+      } else {
+        this.#head = item.next;
+      }
+      if (item.next) {
+        item.next.prev = item.prev;
+      } else {
+        this.#tail = item.prev;
+      }
+    }
+    {
+      const subList = this.#subLists[location[0]];
+      if (subList.items.length === 1) {
+        this.#subLists.splice(location[0], 1);
+      } else if (location[1] === subList.offset) {
+        subList.items[subList.offset++] = undefined;
+      } else {
+        subList.items.splice(location[1], 1);
+      }
+    }
+    this.length -= 1;
+    return item.value;
   }
 
   *values() {
