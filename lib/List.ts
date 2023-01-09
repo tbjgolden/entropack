@@ -1,10 +1,10 @@
-export type ListNode<T> = {
+type ListNode<T> = {
   value: T;
   next?: ListNode<T>;
   prev?: ListNode<T>;
 };
 
-export type SubList<T> = {
+type SubList<T> = {
   offset: number;
   items: Array<ListNode<T> | undefined>;
 };
@@ -60,25 +60,6 @@ export class List<T> {
     }
   }
 
-  push(...values: T[]) {
-    for (const value of values) {
-      this.#push(value);
-    }
-  }
-
-  #getFirstSubListForUnshift() {
-    this.#ensureSubListExists();
-    let firstSubList = this.#subLists[0];
-    if (firstSubList.offset === 0) {
-      firstSubList = {
-        offset: SUB_BUFFER,
-        items: new Array(SUB_BUFFER).fill(void 0),
-      };
-      this.#subLists.unshift(firstSubList);
-    }
-    return firstSubList;
-  }
-
   #unshift(value: T) {
     const node: ListNode<T> = { value };
     {
@@ -95,6 +76,54 @@ export class List<T> {
     {
       const lastSubList = this.#getFirstSubListForUnshift();
       lastSubList.items[--lastSubList.offset] = node;
+    }
+  }
+
+  #getFirstSubListForUnshift() {
+    this.#ensureSubListExists();
+    let firstSubList = this.#subLists[0];
+    if (firstSubList.offset === 0) {
+      firstSubList = {
+        offset: SUB_BUFFER,
+        items: new Array(SUB_BUFFER).fill(void 0),
+      };
+      this.#subLists.unshift(firstSubList);
+    }
+    return firstSubList;
+  }
+
+  #indexToLocation(index: number): [number, number] {
+    if (index < 0) index = this.length + index;
+    if (Number.isInteger(index)) {
+      if (index >= this.length) {
+        throw new Error("out of bounds error");
+      } else {
+        let len = 0;
+        let i = 0;
+        let subList;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          // eslint-disable-next-line security/detect-object-injection
+          subList = this.#subLists[i];
+          len += subList.items.length - subList.offset;
+          if (index < len) {
+            return [i, subList.items.length - (len - index)];
+          }
+          i += 1;
+        }
+      }
+    } else {
+      throw new TypeError("index must be an integer");
+    }
+  }
+
+  #getByLocation(location: [number, number]): ListNode<T> {
+    return this.#subLists[location[0]].items[location[1]] as ListNode<T>;
+  }
+
+  push(...values: T[]) {
+    for (const value of values) {
+      this.#push(value);
     }
   }
 
@@ -144,42 +173,14 @@ export class List<T> {
             items: new Array(SUB_BUFFER).fill(void 0),
           };
         }
-        if (this.#subLists[0].items.length > 0) {
-          this.#subLists[0].items[this.#subLists[0].offset++] = undefined;
-        }
+        this.#subLists[0].items[this.#subLists[0].offset++] = undefined;
       }
       this.length -= 1;
       return value;
     }
   }
 
-  #indexToLocation(index: number): [number, number] {
-    if (index < 0) index = this.length + index;
-    if (Number.isInteger(index)) {
-      if (index >= this.length) {
-        throw new Error("out of bounds error");
-      } else {
-        let len = 0;
-        let i = 0;
-        for (const subList of this.#subLists) {
-          len += subList.items.length - subList.offset;
-          if (index < len) {
-            return [i, subList.items.length - (len - index)];
-          }
-          i += 1;
-        }
-        throw new Error("error finding index in List");
-      }
-    } else {
-      throw new TypeError("index must be an integer");
-    }
-  }
-
-  #getByLocation(location: [number, number]): ListNode<T> {
-    return this.#subLists[location[0]].items[location[1]] as ListNode<T>;
-  }
-
-  get(index: number): T {
+  at(index: number): T {
     return this.#getByLocation(this.#indexToLocation(index)).value;
   }
 
@@ -194,27 +195,24 @@ export class List<T> {
       this.#unshift(value);
     } else {
       const location = this.#indexToLocation(index);
+      const nextItem = this.#getByLocation(location);
+      const item = { value, prev: nextItem.prev, next: nextItem };
       {
-        const nextItem = this.#getByLocation(location);
-        const item = { value, prev: nextItem.prev, next: nextItem };
         const prevItem = item.prev as ListNode<T>;
         prevItem.next = item;
         nextItem.prev = item;
       }
       const subList = this.#subLists[location[0]];
       {
-        subList.items.splice(location[1], 0, {
-          value,
-          prev: subList.items[location[1]]?.prev,
-          next: subList.items[location[1]],
-        });
+        subList.items.splice(location[1], 0, item);
       }
-      // if the sublist is too big, split in two
       if (subList.offset + subList.items.length > SUB_SIZE) {
         if (subList.offset > 0) {
+          // sublist too big, shift left using offset
           subList.items.shift();
           subList.offset -= 1;
         } else {
+          // sublist too big, split in two
           this.#subLists.splice(
             location[0],
             1,
@@ -253,7 +251,7 @@ export class List<T> {
     }
     {
       const subList = this.#subLists[location[0]];
-      if (subList.items.length === 1) {
+      if (subList.items.length === subList.offset + 1) {
         this.#subLists.splice(location[0], 1);
       } else if (location[1] === subList.offset) {
         subList.items[subList.offset++] = undefined;

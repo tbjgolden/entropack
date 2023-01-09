@@ -3,11 +3,11 @@ import { List } from "./List.js";
 test("List", () => {
   const list = new List();
   for (let j = 0; j < 1000; j++) list.push(j);
-  expect(list.get(30)).toBe(30);
-  expect(list.get(0)).toBe(0);
-  expect(() => list.get(0.5)).toThrow();
-  expect(list.get(-1)).toBe(999);
-  expect(() => list.get(1000)).toThrow;
+  expect(list.at(30)).toBe(30);
+  expect(list.at(0)).toBe(0);
+  expect(() => list.at(0.5)).toThrow();
+  expect(list.at(-1)).toBe(999);
+  expect(() => list.at(1000)).toThrow;
 });
 
 // as queue 3:2
@@ -68,7 +68,7 @@ test("List as queue stack", () => {
     list.pop();
   }
   for (let j = 0; j < 1e5; j += 5) {
-    list.get(j);
+    list.at(j);
   }
   expect(performance.now() - start).toBeLessThan(2000);
   expect([...list.values()].join(",")).toEqual(
@@ -87,17 +87,19 @@ test("List as queue stack", () => {
 test("List all", () => {
   const list = new List<number>();
   expect(list.length).toBe(0);
+  expect(list.shift()).toBe(undefined);
+  expect(list.length).toBe(0);
   list.push(1, 10, 5);
   expect(list.length).toBe(3);
-  expect([...list.values()]).toMatchObject([1, 10, 5]);
+  expect([...list.values()]).toEqual([1, 10, 5]);
   expect(list.shift()).toBe(1);
-  expect([...list.values()]).toMatchObject([10, 5]);
+  expect([...list.values()]).toEqual([10, 5]);
   expect(list.length).toBe(2);
-  expect(list.get(0)).toBe(10);
-  expect(list.get(1)).toBe(5);
-  expect(() => list.get(2)).toThrow();
+  expect(list.at(0)).toBe(10);
+  expect(list.at(1)).toBe(5);
+  expect(() => list.at(2)).toThrow();
   expect(list.shift()).toBe(10);
-  expect([...list.values()]).toMatchObject([5]);
+  expect([...list.values()]).toEqual([5]);
   expect(list.push(11)).toBe(undefined);
   expect(list.push(9)).toBe(undefined);
   expect(list.remove(1)).toBe(11);
@@ -105,14 +107,14 @@ test("List all", () => {
   expect(() => list.remove(1)).toThrow();
   expect(list.remove(0)).toBe(5);
   expect(() => list.remove(0)).toThrow();
-  expect([...list.values()]).toMatchObject([]);
+  expect([...list.values()]).toEqual([]);
   expect(list.length).toBe(0);
-  expect([...list.values()]).toMatchObject([]);
+  expect([...list.values()]).toEqual([]);
   list.push(5, 10, 1);
-  expect([...list.values()]).toMatchObject([5, 10, 1]);
+  expect([...list.values()]).toEqual([5, 10, 1]);
   list.set(2, 2);
-  expect(list.get(2)).toBe(2);
-  expect([...list.values()]).toMatchObject([5, 10, 2]);
+  expect(list.at(2)).toBe(2);
+  expect([...list.values()]).toEqual([5, 10, 2]);
   expect(list.length).toBe(3);
   expect(list.pop()).toBe(2);
   expect(list.length).toBe(2);
@@ -121,13 +123,13 @@ test("List all", () => {
   expect(list.shift()).toBe(10);
   list.push(10);
   list.set(-1, 4);
-  expect(list.get(-1)).toBe(4);
+  expect(list.at(-1)).toBe(4);
   expect(list.pop()).toBe(4);
   expect(list.length).toBe(0);
   expect(list.pop()).toBe(undefined);
   expect(list.shift()).toBe(undefined);
   expect(list.length).toBe(0);
-  expect([...list.values()]).toMatchObject([]);
+  expect([...list.values()]).toEqual([]);
 });
 
 test("List insert", () => {
@@ -137,7 +139,50 @@ test("List insert", () => {
   list.insert(0, "bar");
   list.insert(1, "baz");
   expect(() => list.insert(4, "boo")).toThrow();
-  expect([...list.values()]).toMatchObject(["bar", "baz", "foo"]);
+  expect([...list.values()]).toEqual(["bar", "baz", "foo"]);
+});
+
+test("List insert shift if sublist full", () => {
+  const list = new List<string>();
+  expect(list.length).toBe(0);
+  list.insert(0, "foo");
+  for (let i = 0; i < 201; i++) {
+    list.insert(1, "baz" + i);
+  }
+  expect(list.at(0)).toBe("foo");
+  expect(list.at(1)).toBe("baz200");
+  expect(list.at(149)).toBe("baz52");
+  expect(list.at(150)).toBe("baz51");
+  expect(list.at(151)).toBe("baz50");
+  expect(list.at(201)).toBe("baz0");
+});
+
+test("List remove will autoremove sublist", () => {
+  const list = new List<string>();
+  expect(list.length).toBe(0);
+  list.insert(0, "foo");
+  list.insert(1, "baz");
+  list.insert(1, "bar");
+  expect([...list.values()]).toEqual(["foo", "bar", "baz"]);
+  list.remove(2);
+  expect([...list.values()]).toEqual(["foo", "bar"]);
+  list.remove(1);
+  expect([...list.values()]).toEqual(["foo"]);
+  list.remove(0);
+  expect([...list.values()]).toEqual([]);
+  expect(() => list.at(1)).toThrow();
+  list.push("boi");
+  expect([...list.values()]).toEqual(["boi"]);
+});
+
+test("List remove at sublist start will use buffer", () => {
+  const list = new List<number>();
+  expect(list.length).toBe(0);
+  for (let i = 0; i < 102; i++) {
+    list.push(i);
+  }
+  expect([...list.values()]).toEqual(new Array(102).fill(0).map((_, i) => i));
+  expect(list.remove(100)).toBe(100);
 });
 
 test("List offset overflow", () => {
@@ -145,5 +190,5 @@ test("List offset overflow", () => {
   expect(list.length).toBe(0);
   list.push(...new Array(20).fill(0).map((_, i) => i));
   for (let i = 0; i <= 15; i++) list.shift();
-  expect([...list.values()]).toMatchObject([16, 17, 18, 19]);
+  expect([...list.values()]).toEqual([16, 17, 18, 19]);
 });
