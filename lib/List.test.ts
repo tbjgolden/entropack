@@ -20,6 +20,23 @@ test("List", () => {
   expect([...list1]).toEqual([...list2]);
   list1.pushHead(...list2);
   expect([...list1]).toEqual([...list2, ...list2]);
+  expect(() => list1.get(-100)?.value).toThrow();
+  expect(() => list1.get(0.5)?.value).toThrow();
+  expect(list1.get(0)?.value).toBe(0);
+  expect(list1.get(1)?.value).toBe(1);
+  expect(list1.get(5)?.value).toBe(2);
+  expect(list1.get(-1)?.value).toBe(2);
+  expect(list1.get(-2)?.value).toBe(1);
+  expect(list1.splice(1, 3, 4)).toEqual([1, 2, 0]);
+  expect([...list1]).toEqual([0, 4, 1, 2]);
+  expect(list1.splice(0, 1)).toEqual([0]);
+  expect([...list1]).toEqual([4, 1, 2]);
+  expect(list1.splice(-1, 1)).toEqual([2]);
+  expect([...list1]).toEqual([4, 1]);
+  expect(list1.splice(2, 0, 3)).toEqual([]);
+  expect([...list1]).toEqual([4, 1, 3]);
+  expect(list1.splice(1)).toEqual([]);
+  expect([...list1]).toEqual([4, 1, 3]);
 });
 
 // as queue 3:2
