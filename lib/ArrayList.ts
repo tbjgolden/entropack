@@ -113,7 +113,7 @@ export class ArrayList<T = never> {
   #indexToLocation(index: number): [number, number] {
     if (index < 0) index = this.length + index;
     if (Number.isInteger(index)) {
-      if (index >= this.length) {
+      if (index < 0 || index >= this.length) {
         throw new Error("out of bounds error");
       } else {
         let len = 0;
