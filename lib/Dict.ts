@@ -7,23 +7,21 @@ type ConditionalKeys<Base, Condition> = NonNullable<
   { [Key in keyof Base]: Base[Key] extends Condition ? Key : never }[keyof Base]
 >;
 
-type WritableJsonObject<Z extends null | undefined> = Z extends undefined
-  ? { [Key in string]?: JsonValue<Z> | Z }
-  : { [Key in string]: JsonValue<Z> | Z };
-type JsonObject<Z extends null | undefined> = Readonly<WritableJsonObject<Z>>;
-type JsonArray<Z extends null | undefined> = ReadonlyArray<JsonValue<Z>>;
-type JsonPrimitive<Z extends null | undefined> = string | number | boolean | Z;
-type JsonValue<Z extends null | undefined> = JsonPrimitive<Z> | JsonArray<Z> | JsonObject<Z>;
+type WritableJsonObject = { [Key in string]?: JsonValue | undefined };
+type JsonObject = Readonly<WritableJsonObject>;
+type JsonArray = ReadonlyArray<JsonValue>;
+type JsonPrimitive = string | number | boolean | undefined;
+type JsonValue = JsonPrimitive | JsonArray | JsonObject;
 
-type RawValue = JsonPrimitive<undefined> | Dict<JsonObject<undefined>> | RawValue[];
+type RawValue = JsonPrimitive | Dict<JsonObject> | RawValue[];
 type DictEntry = readonly [key: string, value: Readonly<RawValue>];
 
-type A<T extends JsonObject<undefined>> = {
-  [K in keyof T]: T[K] extends JsonObject<undefined> ? Dict<T[K]> : B<T[K]>;
+type A<T extends JsonObject> = {
+  [K in keyof T]: T[K] extends JsonObject ? Dict<T[K]> : B<T[K]>;
 };
-type B<T extends JsonValue<undefined>> = T extends JsonObject<undefined>
+type B<T extends JsonValue> = T extends JsonObject
   ? A<T>
-  : T extends JsonArray<undefined>
+  : T extends JsonArray
   ? { [K in keyof T & number]: B<T[K]> }
   : T;
 
@@ -31,14 +29,12 @@ function isArr(value: unknown): value is unknown[] | ReadonlyArray<unknown> {
   return Array.isArray(value);
 }
 
-function toArrWithDicts(array: readonly JsonValue<undefined>[]) {
+function toArrWithDicts(array: readonly JsonValue[]) {
   const safeArray: RawValue[] = [];
   for (const value of array) {
     if (typeof value === "object") {
       safeArray.push(
-        isArr(value)
-          ? toArrWithDicts(value)
-          : new Dict(value as { [x: string]: JsonValue<undefined> })
+        isArr(value) ? toArrWithDicts(value) : new Dict(value as { [x: string]: JsonValue })
       );
     } else {
       safeArray.push(value);
@@ -62,7 +58,7 @@ function binarySearch(array: { k: string }[], k: string) {
   return start;
 }
 
-function toJsonArray(value: readonly RawValue[]): JsonArray<undefined> {
+function toJsonArray(value: readonly RawValue[]): JsonArray {
   return value.map((item) => {
     if (typeof item === "object") {
       return isArr(item) ? toJsonArray(item) : item.toJSON();
@@ -86,7 +82,7 @@ function toStringArr(value: ReadonlyArray<Readonly<RawValue>>): string {
   return "[" + value.map((v) => toString(v)) + "]";
 }
 
-export class Dict<Shape extends Readonly<JsonObject<undefined>>> {
+export class Dict<Shape extends Readonly<JsonObject>> {
   #contentsAsObject: Map<keyof Shape, Readonly<RawValue>>;
   #contentsAsEntries: Array<{ k: string; v: Readonly<RawValue> }> = [];
 
@@ -138,6 +134,29 @@ export class Dict<Shape extends Readonly<JsonObject<undefined>>> {
     this.values = Object.freeze(values);
   }
 
+  static equal<T extends JsonObject, U extends JsonObject>(
+    a: Dict<T> | T,
+    b: Dict<U> | U
+  ): boolean {
+    const aDict = a instanceof Dict ? a : new Dict(a);
+    const bDict = b instanceof Dict ? b : new Dict(b);
+    return aDict.toString() === bDict.toString();
+  }
+
+  matches<T extends JsonObject>(mask: Dict<T> | T): boolean {
+    const maskDict = mask instanceof Dict ? mask : new Dict(mask);
+
+    for (const [key, maskValue] of maskDict.entries) {
+      if (this.#contentsAsObject.has(key)) {
+        const value = this.#contentsAsObject.get(key);
+        if (toString(maskValue) !== toString(value)) return false;
+      } else {
+        return false;
+      }
+    }
+    return true;
+  }
+
   get<K extends keyof Shape>(key: StringSuggest<K>): A<Shape>[K] {
     return this.#contentsAsObject.get(key) as A<Shape>[K];
   }
@@ -151,7 +170,7 @@ export class Dict<Shape extends Readonly<JsonObject<undefined>>> {
   toJSON(): Shape {
     let json: Shape;
     if (this.#json === undefined) {
-      const o: WritableJsonObject<undefined> = Object.create(null);
+      const o: WritableJsonObject = Object.create(null);
       for (const [k, v] of this.entries) {
         if (typeof v === "object") {
           // eslint-disable-next-line security/detect-object-injection
