@@ -6,7 +6,8 @@
 
 data structures first
 
-- [x] List (ArrayList-esque)
+- [x] ArrayList
+- [x] List (doubly linked list)
 - [ ] Dict (predictable serialisation, sorted keys)
 - [ ] JSON+
   - removeJsonComments
